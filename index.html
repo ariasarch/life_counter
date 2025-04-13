@@ -288,6 +288,65 @@
     .hidden {
       display: none;
     }
+
+    .rotation-controls {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      padding: 8px;
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .rotation-label {
+      color: white;
+      font-size: 3vmin;
+      margin-bottom: 5px;
+    }
+    
+    .rotation-buttons {
+      display: flex;
+      gap: 5px;
+    }
+    
+    .rotation-btn {
+      width: 8vmin;
+      height: 8vmin;
+      border-radius: 50%;
+      border: none;
+      font-size: 4vmin;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    
+    .player-menu-container {
+      position: absolute;
+      top: 20%;
+      left: 10%;
+      right: 10%;
+      bottom: 20%;
+      background-color: rgba(0, 0, 0, 0.9);
+      color: white;
+      z-index: 150;
+      border: 2px solid #333;
+      border-radius: 10px;
+      transform: scale(0);
+      transition: transform 0.3s ease;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .player-menu-container.active {
+      transform: scale(1);
+    }
   </style>
 </head>
 <body>
@@ -883,6 +942,416 @@
         }
       }
     }
+    
+    // Function to create rotation controls for each player
+    function addRotationControls() {
+      playerData.forEach(player => {
+        const playerDiv = document.getElementById(`player-${player.id}`);
+        
+        // Create rotation controls
+        const rotationControls = document.createElement('div');
+        rotationControls.className = 'rotation-controls';
+        rotationControls.id = `rotation-controls-${player.id}`;
+        
+        // Label
+        const rotationLabel = document.createElement('div');
+        rotationLabel.className = 'rotation-label';
+        rotationLabel.textContent = '0°';
+        rotationLabel.id = `rotation-label-${player.id}`;
+        
+        // Buttons container
+        const rotationButtons = document.createElement('div');
+        rotationButtons.className = 'rotation-buttons';
+        
+        // CCW button
+        const ccwButton = document.createElement('button');
+        ccwButton.className = 'rotation-btn';
+        ccwButton.textContent = '↺';
+        ccwButton.addEventListener('click', () => rotatePlayer(player.id, -90));
+        
+        // CW button
+        const cwButton = document.createElement('button');
+        cwButton.className = 'rotation-btn';
+        cwButton.textContent = '↻';
+        cwButton.addEventListener('click', () => rotatePlayer(player.id, 90));
+        
+        // Assemble controls
+        rotationButtons.appendChild(ccwButton);
+        rotationButtons.appendChild(cwButton);
+        rotationControls.appendChild(rotationLabel);
+        rotationControls.appendChild(rotationButtons);
+        
+        playerDiv.appendChild(rotationControls);
+      });
+    }
+    
+    // Function to rotate a player section by a specified angle increment
+    function rotatePlayer(playerId, angleIncrement) {
+      const playerDiv = document.getElementById(`player-${playerId}`);
+      const rotationLabel = document.getElementById(`rotation-label-${playerId}`);
+      
+      // Get current rotation angle
+      let currentAngle = 0;
+      const transform = playerDiv.style.transform;
+      if (transform) {
+        const match = transform.match(/rotate\((-?\d+)deg\)/);
+        if (match) {
+          currentAngle = parseInt(match[1]);
+        }
+      }
+      
+      // Calculate new angle
+      const newAngle = currentAngle + angleIncrement;
+      
+      // Apply rotation
+      playerDiv.style.transform = `rotate(${newAngle}deg)`;
+      rotationLabel.textContent = `${newAngle}°`;
+      
+      // Save the rotation in localStorage
+      playerData[playerId-1].rotation = newAngle;
+      savePlayerData();
+    }
+    
+    // Create player-specific menu containers
+    function createPlayerMenus() {
+      playerData.forEach(player => {
+        const playerDiv = document.getElementById(`player-${player.id}`);
+        
+        // Create player-specific menu container
+        const menuContainer = document.createElement('div');
+        menuContainer.className = 'player-menu-container';
+        menuContainer.id = `player-menu-${player.id}`;
+        
+        // Back button
+        const backBtn = document.createElement('button');
+        backBtn.className = 'back-btn';
+        backBtn.textContent = 'Back';
+        backBtn.addEventListener('click', () => closePlayerMenu(player.id));
+        
+        // Menu options
+        const menuOptions = document.createElement('div');
+        menuOptions.className = 'menu-list';
+        
+        // Poison counter option
+        const poisonOption = document.createElement('div');
+        poisonOption.className = 'menu-item';
+        poisonOption.textContent = 'Add Poison Counters';
+        poisonOption.addEventListener('click', () => {
+          currentMenuPlayerId = player.id;
+          currentCounterType = 'poison';
+          currentPlayerId = player.id;
+          showPlayerCounterEditor(player.id);
+        });
+        
+        // Commander damage option
+        const commanderOption = document.createElement('div');
+        commanderOption.className = 'menu-item';
+        commanderOption.textContent = 'Add Commander Damage';
+        commanderOption.addEventListener('click', () => {
+          currentMenuPlayerId = player.id;
+          currentCounterType = 'commander';
+          currentPlayerId = player.id;
+          showPlayerCommanderSourceSelector(player.id);
+        });
+        
+        // Assemble menu
+        menuOptions.appendChild(poisonOption);
+        menuOptions.appendChild(commanderOption);
+        menuContainer.appendChild(backBtn);
+        menuContainer.appendChild(menuOptions);
+        
+        // Player selector section (hidden by default)
+        const playerSelector = document.createElement('div');
+        playerSelector.className = 'hidden';
+        playerSelector.id = `player-selector-${player.id}`;
+        
+        const selectorTitle = document.createElement('h2');
+        selectorTitle.style.textAlign = 'center';
+        selectorTitle.style.padding = '10px';
+        selectorTitle.style.fontSize = '5vmin';
+        selectorTitle.textContent = 'Select Player';
+        
+        const selectorList = document.createElement('div');
+        selectorList.className = 'player-selector';
+        selectorList.id = `player-selector-list-${player.id}`;
+        
+        playerSelector.appendChild(selectorTitle);
+        playerSelector.appendChild(selectorList);
+        menuContainer.appendChild(playerSelector);
+        
+        // Counter editor section (hidden by default)
+        const counterEditor = document.createElement('div');
+        counterEditor.className = 'hidden';
+        counterEditor.id = `counter-editor-${player.id}`;
+        
+        const counterTitleContainer = document.createElement('div');
+        counterTitleContainer.style.textAlign = 'center';
+        counterTitleContainer.style.padding = '10px';
+        
+        const counterTitle = document.createElement('h2');
+        counterTitle.style.fontSize = '5vmin';
+        counterTitle.id = `counter-title-${player.id}`;
+        counterTitle.textContent = 'Poison Counters';
+        
+        const counterSubtitle = document.createElement('h3');
+        counterSubtitle.style.fontSize = '4vmin';
+        counterSubtitle.id = `counter-subtitle-${player.id}`;
+        
+        counterTitleContainer.appendChild(counterTitle);
+        counterTitleContainer.appendChild(counterSubtitle);
+        
+        const counterControls = document.createElement('div');
+        counterControls.style.display = 'flex';
+        counterControls.style.justifyContent = 'center';
+        counterControls.style.alignItems = 'center';
+        counterControls.style.gap = '20px';
+        counterControls.style.padding = '20px';
+        
+        const minusBtn = document.createElement('button');
+        minusBtn.className = 'life-btn';
+        minusBtn.id = `counter-minus-${player.id}`;
+        minusBtn.textContent = '-';
+        minusBtn.addEventListener('click', () => adjustPlayerCounter(player.id, -1));
+        
+        const counterValue = document.createElement('div');
+        counterValue.className = 'counter-display';
+        counterValue.id = `counter-value-${player.id}`;
+        counterValue.textContent = '0';
+        
+        const plusBtn = document.createElement('button');
+        plusBtn.className = 'life-btn';
+        plusBtn.id = `counter-plus-${player.id}`;
+        plusBtn.textContent = '+';
+        plusBtn.addEventListener('click', () => adjustPlayerCounter(player.id, 1));
+        
+        counterControls.appendChild(minusBtn);
+        counterControls.appendChild(counterValue);
+        counterControls.appendChild(plusBtn);
+        
+        counterEditor.appendChild(counterTitleContainer);
+        counterEditor.appendChild(counterControls);
+        menuContainer.appendChild(counterEditor);
+        
+        // Add menu to player div
+        playerDiv.appendChild(menuContainer);
+      });
+    }
+    
+    // Function to toggle player-specific menu
+    function togglePlayerMenu(playerId) {
+      const menuContainer = document.getElementById(`player-menu-${playerId}`);
+      menuContainer.classList.toggle('active');
+      resetPlayerMenuState(playerId);
+    }
+    
+    // Function to close player-specific menu
+    function closePlayerMenu(playerId) {
+      const menuContainer = document.getElementById(`player-menu-${playerId}`);
+      const mainOptions = menuContainer.querySelector('.menu-list');
+      const playerSelector = document.getElementById(`player-selector-${playerId}`);
+      const counterEditor = document.getElementById(`counter-editor-${playerId}`);
+      
+      if (!mainOptions.classList.contains('hidden')) {
+        // If on main menu, close the entire menu
+        menuContainer.classList.remove('active');
+      } else if (!playerSelector.classList.contains('hidden')) {
+        // If on player selector, go back to main menu
+        playerSelector.classList.add('hidden');
+        mainOptions.classList.remove('hidden');
+      } else if (!counterEditor.classList.contains('hidden')) {
+        // If on counter editor, check if we're editing commander damage
+        if (currentCounterType === 'commander') {
+          // Go back to player selector
+          counterEditor.classList.add('hidden');
+          playerSelector.classList.remove('hidden');
+        } else {
+          // Go back to main menu
+          counterEditor.classList.add('hidden');
+          mainOptions.classList.remove('hidden');
+        }
+      }
+    }
+    
+    // Function to reset player menu state
+    function resetPlayerMenuState(playerId) {
+      const menuContainer = document.getElementById(`player-menu-${playerId}`);
+      const mainOptions = menuContainer.querySelector('.menu-list');
+      const playerSelector = document.getElementById(`player-selector-${playerId}`);
+      const counterEditor = document.getElementById(`counter-editor-${playerId}`);
+      
+      mainOptions.classList.remove('hidden');
+      playerSelector.classList.add('hidden');
+      counterEditor.classList.add('hidden');
+    }
+    
+    // Function to show player commander source selector
+    function showPlayerCommanderSourceSelector(playerId) {
+      const menuContainer = document.getElementById(`player-menu-${playerId}`);
+      const mainOptions = menuContainer.querySelector('.menu-list');
+      const playerSelector = document.getElementById(`player-selector-${playerId}`);
+      const counterEditor = document.getElementById(`counter-editor-${playerId}`);
+      const selectorList = document.getElementById(`player-selector-list-${playerId}`);
+      
+      // Clear previous entries
+      selectorList.innerHTML = '';
+      
+      // Create source player options (all players except current)
+      playerData.forEach(player => {
+        if (player.id !== playerId) {
+          const playerOption = document.createElement('div');
+          playerOption.className = 'player-option';
+          playerOption.style.backgroundColor = player.color;
+          playerOption.textContent = player.name;
+          
+          playerOption.addEventListener('click', () => {
+            currentSourceId = player.id;
+            showPlayerCounterEditor(playerId);
+          });
+          
+          selectorList.appendChild(playerOption);
+        }
+      });
+      
+      // Update text to clarify this is for selecting the source
+      const headerText = document.createElement('h2');
+      headerText.style.width = '100%';
+      headerText.style.textAlign = 'center';
+      headerText.style.fontSize = '5vmin';
+      headerText.style.padding = '10px';
+      headerText.textContent = `Select commander dealing damage to ${playerData[playerId-1].name}`;
+      
+      selectorList.prepend(headerText);
+      
+      // Show player selector, hide other menus
+      mainOptions.classList.add('hidden');
+      counterEditor.classList.add('hidden');
+      playerSelector.classList.remove('hidden');
+    }
+    
+    // Function to show player counter editor
+    function showPlayerCounterEditor(playerId) {
+      const menuContainer = document.getElementById(`player-menu-${playerId}`);
+      const mainOptions = menuContainer.querySelector('.menu-list');
+      const playerSelector = document.getElementById(`player-selector-${playerId}`);
+      const counterEditor = document.getElementById(`counter-editor-${playerId}`);
+      const counterTitle = document.getElementById(`counter-title-${playerId}`);
+      const counterSubtitle = document.getElementById(`counter-subtitle-${playerId}`);
+      const counterValue = document.getElementById(`counter-value-${playerId}`);
+      
+      // Set up counter editor based on counter type
+      if (currentCounterType === 'poison') {
+        counterTitle.textContent = 'Poison Counters';
+        counterSubtitle.textContent = playerData[playerId-1].name;
+        counterValue.textContent = playerData[playerId-1].poison;
+      } else if (currentCounterType === 'commander') {
+        const targetPlayer = playerData[playerId-1];
+        const sourcePlayer = playerData[currentSourceId-1];
+        
+        counterTitle.textContent = 'Commander Damage';
+        counterSubtitle.textContent = `${sourcePlayer.name} → ${targetPlayer.name}`;
+        counterValue.textContent = targetPlayer.commanderDamage[currentSourceId] || 0;
+      }
+      
+      // Show counter editor, hide other menus
+      mainOptions.classList.add('hidden');
+      playerSelector.classList.add('hidden');
+      counterEditor.classList.remove('hidden');
+    }
+    
+    // Function to adjust player counter value
+    function adjustPlayerCounter(playerId, amount) {
+      const counterValue = document.getElementById(`counter-value-${playerId}`);
+      
+      if (currentCounterType === 'poison') {
+        // Update poison counter
+        playerData[playerId-1].poison += amount;
+        // Ensure it doesn't go below 0
+        if (playerData[playerId-1].poison < 0) {
+          playerData[playerId-1].poison = 0;
+        }
+        counterValue.textContent = playerData[playerId-1].poison;
+      } else if (currentCounterType === 'commander') {
+        // Update commander damage
+        if (!playerData[playerId-1].commanderDamage[currentSourceId]) {
+          playerData[playerId-1].commanderDamage[currentSourceId] = 0;
+        }
+        
+        playerData[playerId-1].commanderDamage[currentSourceId] += amount;
+        
+        // Ensure it doesn't go below 0
+        if (playerData[playerId-1].commanderDamage[currentSourceId] < 0) {
+          playerData[playerId-1].commanderDamage[currentSourceId] = 0;
+        }
+        
+        counterValue.textContent = playerData[playerId-1].commanderDamage[currentSourceId];
+      }
+      
+      // Update counters display
+      updateCountersDisplay();
+    }
+    
+    // Function to apply saved rotation on load
+    function applyRotations() {
+      playerData.forEach(player => {
+        if (player.rotation) {
+          const playerDiv = document.getElementById(`player-${player.id}`);
+          const rotationLabel = document.getElementById(`rotation-label-${player.id}`);
+          
+          playerDiv.style.transform = `rotate(${player.rotation}deg)`;
+          rotationLabel.textContent = `${player.rotation}°`;
+        }
+      });
+    }
+    
+    // Override the original menu button event listener
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        // Remove the original menu buttons event listeners and add new ones
+        playerData.forEach(player => {
+          const menuBtn = document.getElementById(`menu-btn-${player.id}`);
+          const newMenuBtn = menuBtn.cloneNode(true);
+          
+          menuBtn.parentNode.replaceChild(newMenuBtn, menuBtn);
+          
+          newMenuBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            togglePlayerMenu(player.id);
+          });
+        });
+        
+        // Create rotation controls
+        addRotationControls();
+        
+        // Create player-specific menus
+        createPlayerMenus();
+        
+        // Apply saved rotations
+        applyRotations();
+      }, 200);
+    });
+    
+    // Update the load player data function to load rotation values
+    const originalLoadPlayerData = loadPlayerData;
+    loadPlayerData = function() {
+      originalLoadPlayerData();
+      
+      const savedData = localStorage.getItem('commanderLifeData');
+      
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          
+          // Update our data with rotation values
+          parsedData.forEach((player, index) => {
+            if (index < playerData.length) {
+              playerData[index].rotation = player.rotation || 0;
+            }
+          });
+        } catch (e) {
+          console.error('Failed to load rotation data', e);
+        }
+      }
+    };
   </script>
 </body>
 </html>
