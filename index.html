@@ -15,9 +15,10 @@
     body {
       font-family: Arial, sans-serif;
       background-color: #121212;
-      height: 100vh;
+      min-height: 100vh;
       width: 100vw;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       touch-action: manipulation;
       position: relative;
       display: flex;
@@ -30,6 +31,7 @@
       flex-direction: column;
       height: 85vh; /* Reduced vertical height by 15% */
       width: 90vw;
+      min-height: 500px; /* Minimum height to ensure it's usable on small screens */
     }
     
     .row {
@@ -193,13 +195,13 @@
     
     .menu-list {
       list-style: none;
-      padding: 20px;
+      padding: 15px;
     }
     
     .menu-item {
-      padding: 15px;
-      margin: 5px 0;
-      font-size: 6vmin;
+      padding: 10px;
+      margin: 3px 0;
+      font-size: 4.5vmin;
       background-color: rgba(255, 255, 255, 0.1);
       border-radius: 8px;
       text-align: center;
@@ -229,22 +231,22 @@
     
     .counters-display {
       position: absolute;
-      left: 10px;
-      bottom: 10px;
+      left: 5px;
+      bottom: 5px;
       background-color: rgba(0, 0, 0, 0.5);
-      border-radius: 10px;
-      padding: 5px;
+      border-radius: 5px;
+      padding: 3px;
       z-index: 90;
       color: white;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 5px;
     }
     
     .counter-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
     }
     
     .counter-item {
@@ -289,13 +291,13 @@
     }
     
     .back-btn {
-      font-size: 5vmin;
-      padding: 10px 20px;
+      font-size: 4vmin;
+      padding: 8px 15px;
       background-color: rgba(255, 255, 255, 0.2);
       border: none;
       border-radius: 8px;
       color: white;
-      margin: 10px;
+      margin: 8px;
       touch-action: manipulation;
     }
     
@@ -338,7 +340,7 @@
     </div>
     
     <div id="player-selector" class="hidden">
-      <h2 style="text-align: center; padding: 10px; font-size: 6vmin;">Select Player</h2>
+      <h2 style="text-align: center; padding: 8px; font-size: 4.5vmin;">Select Player</h2>
       <div class="player-selector" id="player-selector-list">
         <!-- Will be populated by JavaScript -->
       </div>
@@ -412,8 +414,8 @@
     document.addEventListener('DOMContentLoaded', function() {
       const container = document.getElementById('players-container');
       
-      // Apply scaling to ensure nothing gets cut off
-      document.body.style.padding = '5vh 5vw';
+      // Apply vertical padding to prevent cut-off
+      document.body.style.padding = '7.5vh 5vw';
       
       // Clear container
       container.innerHTML = '';
