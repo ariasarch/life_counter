@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MTG Commander Life Counter</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      touch-action: manipulation;
+      position: relative;
+    }
+    
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      height: 100vh;
+      width: 100vw;
+      gap: 4px;
+    }
+    
+    .player {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      padding: 10px;
+      text-align: center;
+      color: white;
+    }
+    
+    .player-name {
+      font-size: 6vmin;
+      margin-bottom: 5px;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 5px;
+      border: 2px solid transparent;
+    }
+    
+    .player-name:hover, .player-name:active {
+      border: 2px dashed rgba(255,255,255,0.5);
+    }
+    
+    .player-name-input {
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      font-size: 6vmin;
+      text-align: center;
+      padding: 5px;
+      border-radius: 5px;
+      width: 80%;
+      max-width: 200px;
+    }
+    
+    .life-display {
+      font-size: 18vmin;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    
+    .counter-display {
+      font-size: 10vmin;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .life-btn {
+      width: 15vmin;
+      height: 15vmin;
+      border-radius: 50%;
+      border: none;
+      font-size: 8vmin;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    
+    .life-btn:active {
+      background-color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .color-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 8vmin;
+      height: 8vmin;
+      border-radius: 50%;
+      border: 2px solid white;
+      background-color: rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    
+    .menu-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 8vmin;
+      height: 8vmin;
+      border-radius: 50%;
+      border: 2px solid white;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 4vmin;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 50;
+      touch-action: manipulation;
+    }
+    
+    .menu-btn:active {
+      background-color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .color-picker {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.9);
+      padding: 15px;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 10px;
+      z-index: 100;
+    }
+    
+    .color-option {
+      width: 10vmin;
+      height: 10vmin;
+      border-radius: 5px;
+      border: 2px solid white;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    
+    .menu-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(0, 0, 0, 0.9);
+      color: white;
+      z-index: 150;
+      border-bottom: 2px solid #333;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+    }
+    
+    .menu-container.active {
+      transform: translateY(0);
+    }
+    
+    .menu-list {
+      list-style: none;
+      padding: 20px;
+    }
+    
+    .menu-item {
+      padding: 15px;
+      margin: 5px 0;
+      font-size: 6vmin;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .menu-item:active {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .player-selector {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      gap: 10px;
+      padding: 15px;
+    }
+    
+    .player-option {
+      width: 45%;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      font-size: 5vmin;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    
+    .counters-display {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      padding: 5px;
+      z-index: 90;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .counter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .counter-item {
+      text-align: center;
+      width: 12vmin;
+      height: 12vmin;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 5vmin;
+      position: relative;
+    }
+    
+    .player-indicator {
+      position: absolute;
+      max-width: 10vmin;
+      height: 3vmin;
+      border-radius: 3px;
+      border: 1px solid white;
+      font-size: 2vmin;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      top: -1vmin;
+      right: -1vmin;
+      background-color: #121212;
+      padding: 0 2px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    
+    .poison-counter {
+      background-color: #006400;
+      color: white;
+      -webkit-text-stroke: 1px black;
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    }
+    
+    .back-btn {
+      font-size: 5vmin;
+      padding: 10px 20px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      margin: 10px;
+      touch-action: manipulation;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Menu Container -->
+  <div class="menu-container" id="menu-container">
+    <button class="back-btn" id="menu-back-btn">Back</button>
+    <div id="main-menu">
+      <ul class="menu-list">
+        <li class="menu-item" id="poison-counter-btn">Add Poison Counters</li>
+        <li class="menu-item" id="commander-damage-btn">Add Commander Damage</li>
+      </ul>
+    </div>
+    
+    <div id="player-selector" class="hidden">
+      <h2 style="text-align: center; padding: 10px; font-size: 6vmin;">Select Player</h2>
+      <div class="player-selector" id="player-selector-list">
+        <!-- Will be populated by JavaScript -->
+      </div>
+    </div>
+    
+    <div id="counter-editor" class="hidden">
+      <div style="text-align: center; padding: 10px;">
+        <h2 id="counter-title" style="font-size: 6vmin;">Poison Counters</h2>
+        <h3 id="counter-subtitle" style="font-size: 4vmin;"></h3>
+      </div>
+      <div style="display: flex; justify-content: center; align-items: center; gap: 20px; padding: 20px;">
+        <button class="life-btn" id="counter-minus">-</button>
+        <div class="counter-display" id="counter-value">0</div>
+        <button class="life-btn" id="counter-plus">+</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main Game Container -->
+  <div class="container" id="players-container">
+    <!-- Players will be generated by JavaScript -->
+  </div>
+  
+  <script>
+    // Function to rotate top players
+    function rotateTopPlayers() {
+      // Get player divs
+      const player1 = document.getElementById('player-1');
+      const player2 = document.getElementById('player-2');
+      
+      if (player1 && player2) {
+        player1.style.transform = 'rotate(180deg)';
+        player2.style.transform = 'rotate(180deg)';
+      }
+    }
+    
+    // Call after DOM is loaded (will be called from the main script)
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(rotateTopPlayers, 100);
+    });
+  </script>
+
+  <script>
+    // Configuration
+    const PLAYERS_COUNT = 4;
+    const STARTING_LIFE = 40;
+    const COLOR_PRESETS = [
+      '#3a5a78', '#3a7840', '#783a3a', '#78683a', 
+      '#6a3a78', '#3a7878', '#785a3a', '#78143a',
+      '#143a78', '#3a1478', '#1e1e1e', '#343434'
+    ];
+    
+    // Initialize player data
+    const playerData = [];
+    
+    for (let i = 1; i <= PLAYERS_COUNT; i++) {
+      playerData.push({
+        id: i,
+        name: `Player ${i}`,
+        life: STARTING_LIFE,
+        color: COLOR_PRESETS[i - 1],
+        poison: 0,
+        commanderDamage: {}  // Will store commander damage from each player
+      });
+      
+      // Initialize commander damage for this player
+      for (let j = 1; j <= PLAYERS_COUNT; j++) {
+        if (i !== j) {  // Player can't deal commander damage to themselves
+          playerData[i-1].commanderDamage[j] = 0;
+        }
+      }
+    }
+    
+    // Variables for tracking current counter editing
+    let currentMenuPlayerId = null;  // The player whose menu was clicked
+    let currentCounterType = null;   // 'poison' or 'commander'
+    let currentPlayerId = null;      // The player being edited
+    let currentSourceId = null;      // For commander damage, the source player
+    
+    // Wait for DOM to fully load
+    document.addEventListener('DOMContentLoaded', function() {
+      const container = document.getElementById('players-container');
+      
+      // Create player sections
+      playerData.forEach(player => {
+        container.appendChild(createPlayerSection(player));
+      });
+      
+      // Setup menu functionality
+      setupMenu();
+      
+      // Save player data to localStorage when page is unloaded
+      window.addEventListener('beforeunload', savePlayerData);
+      
+      // Try to load saved data
+      loadPlayerData();
+      
+      // Update counters display
+      updateCountersDisplay();
+    });
+    
+    // Create player section
+    function createPlayerSection(player) {
+      const playerDiv = document.createElement('div');
+      playerDiv.className = 'player';
+      playerDiv.id = `player-${player.id}`;
+      playerDiv.dataset.playerId = player.id;
+      playerDiv.style.backgroundColor = player.color;
+      
+      // Player name (clickable)
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'player-name';
+      nameDiv.id = `name-${player.id}`;
+      nameDiv.textContent = player.name;
+      nameDiv.addEventListener('click', editPlayerName);
+      
+      // Life counter
+      const lifeDiv = document.createElement('div');
+      lifeDiv.className = 'life-display';
+      lifeDiv.id = `life-${player.id}`;
+      lifeDiv.textContent = player.life;
+      
+      // Controls
+      const controlsDiv = document.createElement('div');
+      controlsDiv.className = 'controls';
+      
+      // Minus button
+      const minusBtn = document.createElement('button');
+      minusBtn.className = 'life-btn minus-btn';
+      minusBtn.id = `minus-${player.id}`;
+      minusBtn.textContent = '-';
+      minusBtn.addEventListener('click', () => updateLife(player.id, -1));
+      
+      // Plus button
+      const plusBtn = document.createElement('button');
+      plusBtn.className = 'life-btn plus-btn';
+      plusBtn.id = `plus-${player.id}`;
+      plusBtn.textContent = '+';
+      plusBtn.addEventListener('click', () => updateLife(player.id, 1));
+      
+      // Color button
+      const colorBtn = document.createElement('button');
+      colorBtn.className = 'color-btn';
+      colorBtn.id = `color-btn-${player.id}`;
+      colorBtn.addEventListener('click', toggleColorPicker);
+      
+      // Menu button
+      const menuBtn = document.createElement('button');
+      menuBtn.className = 'menu-btn';
+      menuBtn.id = `menu-btn-${player.id}`;
+      menuBtn.textContent = '☰';
+      menuBtn.addEventListener('click', (event) => {
+        currentMenuPlayerId = player.id;
+        toggleMenu(event);
+      });
+      
+      // Color picker (hidden by default)
+      const colorPicker = document.createElement('div');
+      colorPicker.className = 'color-picker hidden';
+      colorPicker.id = `color-picker-${player.id}`;
+      
+      // Create color options
+      COLOR_PRESETS.forEach(color => {
+        const colorOption = document.createElement('div');
+        colorOption.className = 'color-option';
+        colorOption.style.backgroundColor = color;
+        colorOption.addEventListener('click', () => {
+          changePlayerColor(player.id, color);
+          colorPicker.classList.add('hidden');
+        });
+        colorPicker.appendChild(colorOption);
+      });
+      
+      // Assemble all elements
+      controlsDiv.appendChild(minusBtn);
+      controlsDiv.appendChild(plusBtn);
+      
+      playerDiv.appendChild(nameDiv);
+      playerDiv.appendChild(lifeDiv);
+      playerDiv.appendChild(controlsDiv);
+      playerDiv.appendChild(colorBtn);
+      playerDiv.appendChild(menuBtn);
+      playerDiv.appendChild(colorPicker);
+      
+      return playerDiv;
+    }
+    
+    // Toggle menu
+    function toggleMenu(event) {
+      const menuContainer = document.getElementById('menu-container');
+      menuContainer.classList.toggle('active');
+      resetMenuState();
+      
+      // Position menu near the clicked button
+      if (menuContainer.classList.contains('active')) {
+        menuContainer.style.top = '0';
+        menuContainer.style.left = '0';
+        menuContainer.style.right = '0';
+      }
+    }
+    
+    // Setup menu functionality
+    function setupMenu() {
+      const menuContainer = document.getElementById('menu-container');
+      const menuBackBtn = document.getElementById('menu-back-btn');
+      const poisonBtn = document.getElementById('poison-counter-btn');
+      const commanderBtn = document.getElementById('commander-damage-btn');
+      const mainMenu = document.getElementById('main-menu');
+      const playerSelector = document.getElementById('player-selector');
+      const counterEditor = document.getElementById('counter-editor');
+      const counterTitle = document.getElementById('counter-title');
+      const counterSubtitle = document.getElementById('counter-subtitle');
+      const counterValue = document.getElementById('counter-value');
+      const counterMinus = document.getElementById('counter-minus');
+      const counterPlus = document.getElementById('counter-plus');
+      const playerSelectorList = document.getElementById('player-selector-list');
+      
+      // Back button functionality
+      menuBackBtn.addEventListener('click', () => {
+        if (!mainMenu.classList.contains('hidden')) {
+          // If on main menu, close the entire menu
+          menuContainer.classList.remove('active');
+        } else if (!playerSelector.classList.contains('hidden')) {
+          // If on player selector, go back to main menu
+          playerSelector.classList.add('hidden');
+          mainMenu.classList.remove('hidden');
+        } else if (!counterEditor.classList.contains('hidden')) {
+          // If on counter editor, check if we're editing commander damage
+          if (currentCounterType === 'commander') {
+            // Go back to player selector
+            counterEditor.classList.add('hidden');
+            playerSelector.classList.remove('hidden');
+          } else {
+            // Go back to main menu
+            counterEditor.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+          }
+        }
+      });
+      
+      // Poison counter button
+      poisonBtn.addEventListener('click', () => {
+        currentCounterType = 'poison';
+        // For poison, the target player is the one whose menu was clicked
+        currentPlayerId = currentMenuPlayerId;
+        showCounterEditor();
+      });
+      
+      // Commander damage button
+      commanderBtn.addEventListener('click', () => {
+        currentCounterType = 'commander';
+        // For commander damage, the target player is the one whose menu was clicked
+        currentPlayerId = currentMenuPlayerId;
+        showCommanderSourceSelector();
+      });
+      
+      // Counter adjustment buttons
+      counterMinus.addEventListener('click', () => {
+        adjustCounter(-1);
+      });
+      
+      counterPlus.addEventListener('click', () => {
+        adjustCounter(1);
+      });
+      
+      // Function to show commander damage source selector
+      function showCommanderSourceSelector() {
+        // Clear previous entries
+        playerSelectorList.innerHTML = '';
+        
+        // Create source player options (all players except current)
+        playerData.forEach(player => {
+          if (player.id !== currentPlayerId) {
+            const playerOption = document.createElement('div');
+            playerOption.className = 'player-option';
+            playerOption.style.backgroundColor = player.color;
+            playerOption.textContent = player.name;
+            
+            playerOption.addEventListener('click', () => {
+              currentSourceId = player.id;
+              showCounterEditor();
+            });
+            
+            playerSelectorList.appendChild(playerOption);
+          }
+        });
+        
+        // Update text to clarify this is for selecting the source
+        const headerText = document.createElement('h2');
+        headerText.style.width = '100%';
+        headerText.style.textAlign = 'center';
+        headerText.style.fontSize = '5vmin';
+        headerText.style.padding = '10px';
+        headerText.textContent = `Select commander dealing damage to ${playerData[currentPlayerId-1].name}`;
+        
+        playerSelectorList.prepend(headerText);
+        
+        // Show player selector, hide other menus
+        mainMenu.classList.add('hidden');
+        counterEditor.classList.add('hidden');
+        playerSelector.classList.remove('hidden');
+      }
+      
+      // Function to show counter editor
+      function showCounterEditor() {
+        // Set up counter editor based on counter type
+        if (currentCounterType === 'poison') {
+          counterTitle.textContent = 'Poison Counters';
+          counterSubtitle.textContent = playerData[currentPlayerId-1].name;
+          counterValue.textContent = playerData[currentPlayerId-1].poison;
+        } else if (currentCounterType === 'commander') {
+          const targetPlayer = playerData[currentPlayerId-1];
+          const sourcePlayer = playerData[currentSourceId-1];
+          
+          counterTitle.textContent = 'Commander Damage';
+          counterSubtitle.textContent = `${sourcePlayer.name} → ${targetPlayer.name}`;
+          counterValue.textContent = targetPlayer.commanderDamage[currentSourceId] || 0;
+        }
+        
+        // Show counter editor, hide other menus
+        mainMenu.classList.add('hidden');
+        playerSelector.classList.add('hidden');
+        counterEditor.classList.remove('hidden');
+      }
+      
+      // Function to adjust counter value
+      function adjustCounter(amount) {
+        if (currentCounterType === 'poison') {
+          // Update poison counter
+          playerData[currentPlayerId-1].poison += amount;
+          // Ensure it doesn't go below 0
+          if (playerData[currentPlayerId-1].poison < 0) {
+            playerData[currentPlayerId-1].poison = 0;
+          }
+          counterValue.textContent = playerData[currentPlayerId-1].poison;
+        } else if (currentCounterType === 'commander') {
+          // Update commander damage
+          if (!playerData[currentPlayerId-1].commanderDamage[currentSourceId]) {
+            playerData[currentPlayerId-1].commanderDamage[currentSourceId] = 0;
+          }
+          
+          playerData[currentPlayerId-1].commanderDamage[currentSourceId] += amount;
+          
+          // Ensure it doesn't go below 0
+          if (playerData[currentPlayerId-1].commanderDamage[currentSourceId] < 0) {
+            playerData[currentPlayerId-1].commanderDamage[currentSourceId] = 0;
+          }
+          
+          counterValue.textContent = playerData[currentPlayerId-1].commanderDamage[currentSourceId];
+        }
+        
+        // Update counters display
+        updateCountersDisplay();
+      }
+    }
+    
+    // Reset menu state
+    function resetMenuState() {
+      const mainMenu = document.getElementById('main-menu');
+      const playerSelector = document.getElementById('player-selector');
+      const counterEditor = document.getElementById('counter-editor');
+      
+      mainMenu.classList.remove('hidden');
+      playerSelector.classList.add('hidden');
+      counterEditor.classList.add('hidden');
+    }
+    
+    // Update counters display
+    function updateCountersDisplay() {
+      // Update the counters for each player section
+      playerData.forEach(player => {
+        const playerSection = document.getElementById(`player-${player.id}`);
+        let countersDisplay = playerSection.querySelector('.counters-display');
+        
+        // Create counters display if it doesn't exist
+        if (!countersDisplay) {
+          countersDisplay = document.createElement('div');
+          countersDisplay.className = 'counters-display';
+          countersDisplay.id = `counters-${player.id}`;
+          playerSection.appendChild(countersDisplay);
+        }
+        
+        // Clear previous content
+        countersDisplay.innerHTML = '';
+        let hasCounters = false;
+        
+        // Add poison counter if this player has any
+        if (player.poison > 0) {
+          hasCounters = true;
+          
+          const poisonGroup = document.createElement('div');
+          poisonGroup.className = 'counter-group';
+          
+          const counterItem = document.createElement('div');
+          counterItem.className = 'counter-item poison-counter';
+          counterItem.textContent = player.poison;
+          
+          poisonGroup.appendChild(counterItem);
+          countersDisplay.appendChild(poisonGroup);
+        }
+        
+        // Add commander damage taken by this player
+        const cmdrGroup = document.createElement('div');
+        cmdrGroup.className = 'counter-group';
+        let hasCmdrDamage = false;
+        
+        for (const [sourceId, damage] of Object.entries(player.commanderDamage)) {
+          if (damage > 0) {
+            hasCounters = true;
+            hasCmdrDamage = true;
+            
+            const sourcePlayer = playerData[parseInt(sourceId)-1];
+            
+            const counterItem = document.createElement('div');
+            counterItem.className = 'counter-item';
+            counterItem.style.backgroundColor = sourcePlayer.color;
+            counterItem.textContent = damage;
+            
+            const playerIndicator = document.createElement('div');
+            playerIndicator.className = 'player-indicator';
+            playerIndicator.textContent = sourcePlayer.name;
+            playerIndicator.style.backgroundColor = sourcePlayer.color;
+            
+            counterItem.appendChild(playerIndicator);
+            cmdrGroup.appendChild(counterItem);
+          }
+        }
+        
+        // Add commander damage group if any exists
+        if (hasCmdrDamage) {
+          countersDisplay.appendChild(cmdrGroup);
+        }
+        
+        // Show/hide based on whether there are counters
+        if (hasCounters) {
+          countersDisplay.classList.remove('hidden');
+        } else {
+          countersDisplay.classList.add('hidden');
+        }
+      });
+    }
+    
+    // Update life total
+    function updateLife(playerId, amount) {
+      const index = playerId - 1;
+      playerData[index].life += amount;
+      
+      const lifeDisplay = document.getElementById(`life-${playerId}`);
+      lifeDisplay.textContent = playerData[index].life;
+    }
+    
+    // Edit player name
+    function editPlayerName(event) {
+      const nameDiv = event.target;
+      const playerId = nameDiv.id.split('-')[1];
+      const currentName = nameDiv.textContent;
+      
+      // Create input to replace the div
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'player-name-input';
+      input.value = currentName;
+      input.maxLength = 15;
+      
+      // Replace the div with the input
+      nameDiv.parentNode.replaceChild(input, nameDiv);
+      input.focus();
+      
+      // Save on blur or Enter key
+      input.addEventListener('blur', function() {
+        savePlayerName(playerId, input.value, input);
+      });
+      
+      input.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+          savePlayerName(playerId, input.value, input);
+        }
+      });
+    }
+    
+    // Save player name
+    function savePlayerName(playerId, newName, inputElement) {
+      // Update data
+      const index = playerId - 1;
+      playerData[index].name = newName.trim() || `Player ${playerId}`;
+      
+      // Create new name div
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'player-name';
+      nameDiv.id = `name-${playerId}`;
+      nameDiv.textContent = playerData[index].name;
+      nameDiv.addEventListener('click', editPlayerName);
+      
+      // Replace input with the div
+      inputElement.parentNode.replaceChild(nameDiv, inputElement);
+      
+      // Update counters display in case names are shown there
+      updateCountersDisplay();
+    }
+    
+    // Toggle color picker
+    function toggleColorPicker(event) {
+      const colorBtn = event.target;
+      const playerId = colorBtn.id.split('-')[2];
+      const colorPicker = document.getElementById(`color-picker-${playerId}`);
+      
+      // Close all other color pickers first
+      document.querySelectorAll('.color-picker').forEach(picker => {
+        if (picker.id !== `color-picker-${playerId}`) {
+          picker.classList.add('hidden');
+        }
+      });
+      
+      // Toggle this picker
+      colorPicker.classList.toggle('hidden');
+      
+      // Close picker when clicking elsewhere
+      const closePickerHandler = function(e) {
+        if (!colorPicker.contains(e.target) && e.target !== colorBtn) {
+          colorPicker.classList.add('hidden');
+          document.removeEventListener('click', closePickerHandler);
+        }
+      };
+      
+      // Add after a short delay to avoid immediate closing
+      setTimeout(() => {
+        document.addEventListener('click', closePickerHandler);
+      }, 100);
+    }
+    
+    // Change player color
+    function changePlayerColor(playerId, color) {
+      const index = playerId - 1;
+      playerData[index].color = color;
+      
+      const playerDiv = document.getElementById(`player-${playerId}`);
+      playerDiv.style.backgroundColor = color;
+      
+      // Update counters display since colors may have changed
+      updateCountersDisplay();
+    }
+    
+    // Save player data to localStorage
+    function savePlayerData() {
+      localStorage.setItem('commanderLifeData', JSON.stringify(playerData));
+    }
+    
+    // Load player data from localStorage
+    function loadPlayerData() {
+      const savedData = localStorage.getItem('commanderLifeData');
+      
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          
+          // Update our data and UI
+          parsedData.forEach((player, index) => {
+            if (index < playerData.length) {
+              // Update data
+              playerData[index].name = player.name;
+              playerData[index].life = player.life;
+              playerData[index].color = player.color;
+              playerData[index].poison = player.poison || 0;
+              playerData[index].commanderDamage = player.commanderDamage || {};
+              
+              // Update UI
+              const id = index + 1;
+              document.getElementById(`name-${id}`).textContent = player.name;
+              document.getElementById(`life-${id}`).textContent = player.life;
+              document.getElementById(`player-${id}`).style.backgroundColor = player.color;
+            }
+          });
+          
+          // Update counters display
+          updateCountersDisplay();
+        } catch (e) {
+          console.error('Failed to load saved data', e);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
