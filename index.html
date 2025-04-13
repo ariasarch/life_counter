@@ -29,8 +29,8 @@
     .container {
       display: flex;
       flex-direction: column;
-      height: 60vh; /* Reduced vertical height by 15% */
-      width: 125vw; /* Full width */
+      height: 60vh; /* Reduced vertical height by 25% */
+      width: 100vw; /* Width greater than viewport */
     }
     
     .row {
@@ -330,11 +330,11 @@
 <body>
   <!-- Menu Container -->
   <div class="menu-container" id="menu-container">
-    <button class="back-btn" id="menu-back-btn">Back</button>
     <div id="main-menu">
       <ul class="menu-list">
         <li class="menu-item" id="poison-counter-btn">Add Poison Counters</li>
         <li class="menu-item" id="commander-damage-btn">Add Commander Damage</li>
+        <li class="menu-item back-btn" id="menu-back-btn">Back</li>
       </ul>
     </div>
     
