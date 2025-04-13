@@ -20,13 +20,17 @@
       overflow: hidden;
       touch-action: manipulation;
       position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     
     .container {
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      width: 100vw;
+      height: 90vh;
+      width: 90vw;
+      transform: scale(0.9);
     }
     
     .row {
@@ -53,10 +57,10 @@
     }
     
     .player-name {
-      font-size: 6vmin;
-      margin-bottom: 5px;
+      font-size: 5vmin;
+      margin-bottom: 3px;
       cursor: pointer;
-      padding: 5px;
+      padding: 3px;
       border-radius: 5px;
       border: 2px solid transparent;
     }
@@ -78,9 +82,9 @@
     }
     
     .life-display {
-      font-size: 18vmin;
+      font-size: 16vmin;
       font-weight: bold;
-      margin: 10px 0;
+      margin: 8px 0;
     }
     
     .counter-display {
@@ -91,15 +95,15 @@
     
     .controls {
       display: flex;
-      gap: 15px;
+      gap: 12px;
     }
     
     .life-btn {
-      width: 15vmin;
-      height: 15vmin;
+      width: 12vmin;
+      height: 12vmin;
       border-radius: 50%;
       border: none;
-      font-size: 8vmin;
+      font-size: 7vmin;
       background-color: rgba(255, 255, 255, 0.2);
       color: white;
       cursor: pointer;
@@ -407,6 +411,9 @@
     // Wait for DOM to fully load
     document.addEventListener('DOMContentLoaded', function() {
       const container = document.getElementById('players-container');
+      
+      // Apply scaling to ensure nothing gets cut off
+      document.body.style.padding = '5vh 5vw';
       
       // Clear container
       container.innerHTML = '';
