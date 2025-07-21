@@ -314,6 +314,23 @@
     .hidden {
       display: none;
     }
+    
+    .life-change-container{
+      position:absolute;
+      top:-8vmin;                /* sits just above the life total */
+      left:50%;
+      transform:translateX(-50%);
+      display:flex;
+      flex-direction:column;
+      pointer-events:none;       /* clicks pass through */
+    }
+    
+    .life-change{
+      font-size:6vmin;
+      font-weight:bold;
+      opacity:1;
+      transition:opacity .5s ease;
+    }
   </style>
 </head>
 <body>
@@ -370,6 +387,12 @@
     // Wait for DOM to fully load
     document.addEventListener('DOMContentLoaded', function() {
       const container = document.getElementById('players-container');
+
+      window.addEventListener('beforeunload', function (e){
+        savePlayerData();                      // keep your autosave
+        e.preventDefault();                    // standard pattern
+        e.returnValue = 'Are you sure you want to reload the page?';
+      });
       
       // Apply vertical padding to prevent cut-off
       document.body.style.padding = '7.5vh 5vw';
@@ -393,9 +416,6 @@
       
       // Create player-specific menus
       createPlayerMenus();
-      
-      // Save player data to localStorage when page is unloaded
-      window.addEventListener('beforeunload', savePlayerData);
       
       // Try to load saved data
       loadPlayerData();
@@ -487,7 +507,13 @@
       playerDiv.appendChild(colorBtn);
       playerDiv.appendChild(menuBtn);
       playerDiv.appendChild(colorPicker);
-      
+
+      // little stack for +/‑ flashes
+      const changeContainer = document.createElement('div');
+      changeContainer.className = 'life-change-container';
+      changeContainer.id       = `life-change-${player.id}`;
+      playerDiv.appendChild(changeContainer);
+
       return playerDiv;
     }
     
@@ -792,12 +818,13 @@
     }
     
     // Update life total
-    function updateLife(playerId, amount) {
+    function updateLife(playerId, amount){
       const index = playerId - 1;
       playerData[index].life += amount;
-      
-      const lifeDisplay = document.getElementById(`life-${playerId}`);
-      lifeDisplay.textContent = playerData[index].life;
+      document.getElementById(`life-${playerId}`).textContent = playerData[index].life;
+    
+      /* NEW: flash the change */
+      showLifeChange(playerId, amount);
     }
     
     // Edit player name
@@ -924,6 +951,26 @@
           poisonGroup.appendChild(counterItem);
           countersDisplay.appendChild(poisonGroup);
         }
+
+        /* ── Flash +1 / ‑1 helpers ─────────────────────────────── */
+        const lifeChangeTimers = {};         // one timer per player
+        
+        function showLifeChange(playerId, amount){
+          const container = document.getElementById(`life-change-${playerId}`);
+          if(!container) return;
+        
+          const pip = document.createElement('div');
+          pip.className   = 'life-change';
+          pip.textContent = (amount>0?'+':'') + amount;
+          container.appendChild(pip);
+        
+          setTimeout(()=>{ pip.style.opacity='0'; },1500);
+          setTimeout(()=>{ pip.remove();          },2000);
+        
+          clearTimeout(lifeChangeTimers[playerId]);
+          lifeChangeTimers[playerId] = setTimeout(()=>{ container.innerHTML=''; },2000);
+        }
+
         
         // Add commander damage taken by this player
         const cmdrGroup = document.createElement('div');
