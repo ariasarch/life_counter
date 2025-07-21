@@ -1007,23 +1007,42 @@
       });
     }
 
-    /* ── Flash +1 / ‑1 helpers ─────────────────────────────── */
-    const lifeChangeTimers = {};         // one timer per player
+    /* ── Flash, but cumulative ──────────────────────────────── */
+    const flash = {};   // { [playerId]: { timer, amount, node } }
     
-    function showLifeChange(playerId, amount){
+    function showLifeChange(playerId, delta){
+      // 1. create container if we’ve never used it
       const container = document.getElementById(`life-change-${playerId}`);
       if(!container) return;
     
-      const pip = document.createElement('div');
-      pip.className   = 'life-change';
-      pip.textContent = (amount>0?'+':'') + amount;
-      container.appendChild(pip);
+      // 2. initialise or update the running total
+      if(!flash[playerId]){
+        flash[playerId] = { amount : 0, node : null, timer : null };
+      }
+      flash[playerId].amount += delta;
     
-      setTimeout(()=>{ pip.style.opacity='0'; },1500);
-      setTimeout(()=>{ pip.remove();          },2000);
+      // 3. create or reuse the single badge
+      let badge = flash[playerId].node;
+      if(!badge){
+        badge = document.createElement('div');
+        badge.className = 'life-change';
+        container.appendChild(badge);
+        flash[playerId].node = badge;
+      }
     
-      clearTimeout(lifeChangeTimers[playerId]);
-      lifeChangeTimers[playerId] = setTimeout(()=>{ container.innerHTML=''; },2000);
+      // 4. display cumulative value
+      const n = flash[playerId].amount;
+      badge.textContent = (n>0?'+':'') + n;
+    
+      // 5. reset fade timer each click
+      badge.style.opacity = '1';
+      clearTimeout(flash[playerId].timer);
+      flash[playerId].timer = setTimeout(()=>{
+        badge.style.opacity = '0';
+        flash[playerId].amount = 0;         // reset counter
+        flash[playerId].node  = null;       // allow new badge next time
+        setTimeout(()=>badge.remove(), 500); // remove after fade
+      }, 2000);
     }
     
     // Save player data to localStorage
