@@ -830,6 +830,16 @@
       // Update counters display
       updateCountersDisplay();
     }
+
+    // Update life total
+    function updateLife(playerId, amount){
+      const index = playerId - 1;
+      playerData[index].life += amount;
+      document.getElementById(`life-${playerId}`).textContent = playerData[index].life;
+    
+      /* NEW: flash the change */
+      showLifeChange(playerId, amount);
+    }
     
     // Edit player name
     function editPlayerName(event) {
