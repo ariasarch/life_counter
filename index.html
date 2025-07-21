@@ -330,6 +330,20 @@
       font-weight:bold;
       opacity:1;
       transition:opacity .5s ease;
+      color:#fff;                       /* force white text  */
+      text-shadow:0 0 6px #000;         /* soft outline      */
+    }
+    
+    /* give the flash a subtle lift so it isn't buried in the digits */
+    .life-change-container{
+      pointer-events:none;
+      z-index:5;                        /* sit above life digits */
+    }
+    
+    /* un‑flip pips on the rotated (top) players */
+    .player[data-position="top-left"]  .life-change-container,
+    .player[data-position="top-right"] .life-change-container{
+      transform:translateX(-50%) rotate(180deg);
     }
   </style>
 </head>
@@ -951,26 +965,6 @@
           poisonGroup.appendChild(counterItem);
           countersDisplay.appendChild(poisonGroup);
         }
-
-        /* ── Flash +1 / ‑1 helpers ─────────────────────────────── */
-        const lifeChangeTimers = {};         // one timer per player
-        
-        function showLifeChange(playerId, amount){
-          const container = document.getElementById(`life-change-${playerId}`);
-          if(!container) return;
-        
-          const pip = document.createElement('div');
-          pip.className   = 'life-change';
-          pip.textContent = (amount>0?'+':'') + amount;
-          container.appendChild(pip);
-        
-          setTimeout(()=>{ pip.style.opacity='0'; },1500);
-          setTimeout(()=>{ pip.remove();          },2000);
-        
-          clearTimeout(lifeChangeTimers[playerId]);
-          lifeChangeTimers[playerId] = setTimeout(()=>{ container.innerHTML=''; },2000);
-        }
-
         
         // Add commander damage taken by this player
         const cmdrGroup = document.createElement('div');
@@ -1011,6 +1005,25 @@
           countersDisplay.classList.add('hidden');
         }
       });
+    }
+
+    /* ── Flash +1 / ‑1 helpers ─────────────────────────────── */
+    const lifeChangeTimers = {};         // one timer per player
+    
+    function showLifeChange(playerId, amount){
+      const container = document.getElementById(`life-change-${playerId}`);
+      if(!container) return;
+    
+      const pip = document.createElement('div');
+      pip.className   = 'life-change';
+      pip.textContent = (amount>0?'+':'') + amount;
+      container.appendChild(pip);
+    
+      setTimeout(()=>{ pip.style.opacity='0'; },1500);
+      setTimeout(()=>{ pip.remove();          },2000);
+    
+      clearTimeout(lifeChangeTimers[playerId]);
+      lifeChangeTimers[playerId] = setTimeout(()=>{ container.innerHTML=''; },2000);
     }
     
     // Save player data to localStorage
