@@ -334,16 +334,18 @@
       text-shadow:0 0 6px #000;         /* soft outline      */
     }
     
-    /* give the flash a subtle lift so it isn't buried in the digits */
     .life-change-container{
-      pointer-events:none;
-      z-index:5;                        /* sit above life digits */
+      position: absolute;
+      top: 50%;
+      left: 60%;  /* Position to the right of the life total */
+      transform: translateY(-50%);
+      pointer-events: none;
     }
     
-    /* un‑flip pips on the rotated (top) players */
-    .player[data-position="top-left"]  .life-change-container,
+    /* For rotated players, we need to adjust the transform */
+    .player[data-position="top-left"] .life-change-container,
     .player[data-position="top-right"] .life-change-container{
-      transform:translateX(-50%) rotate(180deg);
+      transform: translateY(-50%) rotate(180deg);
     }
   </style>
 </head>
