@@ -1011,39 +1011,26 @@
     const flash = {};   // { [playerId]: { timer, amount, node } }
     
     function showLifeChange(playerId, delta){
-      // 1. create container if we’ve never used it
       const container = document.getElementById(`life-change-${playerId}`);
       if(!container) return;
     
-      // 2. initialise or update the running total
-      if(!flash[playerId]){
-        flash[playerId] = { amount : 0, node : null, timer : null };
-      }
-      flash[playerId].amount += delta;
-    
-      // 3. create or reuse the single badge
-      let badge = flash[playerId].node;
-      if(!badge){
-        badge = document.createElement('div');
-        badge.className = 'life-change';
-        container.appendChild(badge);
-        flash[playerId].node = badge;
+      // Limit to 3 badges max
+      const existingBadges = container.querySelectorAll('.life-change');
+      if(existingBadges.length >= 3) {
+        existingBadges[0].remove(); // Remove oldest
       }
     
-      // 4. display cumulative value
-      const n = flash[playerId].amount;
-      badge.textContent = (n>0?'+':'') + n;
+      // Create a new badge for each click
+      const badge = document.createElement('div');
+      badge.className = 'life-change';
+      badge.textContent = (delta > 0 ? '+' : '') + delta;
+      container.appendChild(badge);
     
-      // 5. reset fade timer each click
-      badge.style.opacity = '1';
-      clearTimeout(flash[playerId].timer);
-      flash[playerId].timer = setTimeout(()=>{
+      // Start fade after 2 seconds
+      setTimeout(() => {
         badge.style.opacity = '0';
-        flash[playerId].amount = 0;         // reset counter
-        setTimeout(()=>{
-          badge.remove();
-          flash[playerId].node = null;     // MOVE THIS LINE HERE - clear reference after removal
-        }, 500);
+        // Remove badge after fade completes
+        setTimeout(() => badge.remove(), 500);
       }, 2000);
     }
     
