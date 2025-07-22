@@ -1014,23 +1014,38 @@
       const container = document.getElementById(`life-change-${playerId}`);
       if(!container) return;
     
-      // Limit to 3 badges max
-      const existingBadges = container.querySelectorAll('.life-change');
-      if(existingBadges.length >= 3) {
-        existingBadges[0].remove(); // Remove oldest
+      // Initialize or update the running total
+      if(!flash[playerId]){
+        flash[playerId] = { amount: 0, node: null, timer: null };
       }
-    
-      // Create a new badge for each click
-      const badge = document.createElement('div');
-      badge.className = 'life-change';
-      badge.textContent = (delta > 0 ? '+' : '') + delta;
-      container.appendChild(badge);
-    
-      // Start fade after 2 seconds
-      setTimeout(() => {
+      
+      // Add to cumulative amount
+      flash[playerId].amount += delta;
+      
+      // Create or reuse the single badge
+      let badge = flash[playerId].node;
+      if(!badge || !badge.parentElement){  // Check if badge exists AND is still in DOM
+        badge = document.createElement('div');
+        badge.className = 'life-change';
+        container.appendChild(badge);
+        flash[playerId].node = badge;
+      }
+      
+      // Display cumulative value
+      const n = flash[playerId].amount;
+      badge.textContent = (n > 0 ? '+' : '') + n;
+      
+      // Reset fade timer each click
+      badge.style.opacity = '1';
+      clearTimeout(flash[playerId].timer);
+      
+      flash[playerId].timer = setTimeout(() => {
         badge.style.opacity = '0';
-        // Remove badge after fade completes
-        setTimeout(() => badge.remove(), 500);
+        setTimeout(() => {
+          badge.remove();
+          flash[playerId].node = null;
+          flash[playerId].amount = 0;  // Reset counter after fade completes
+        }, 500);
       }, 2000);
     }
     
