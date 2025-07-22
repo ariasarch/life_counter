@@ -1040,8 +1040,10 @@
       flash[playerId].timer = setTimeout(()=>{
         badge.style.opacity = '0';
         flash[playerId].amount = 0;         // reset counter
-        flash[playerId].node  = null;       // allow new badge next time
-        setTimeout(()=>badge.remove(), 500); // remove after fade
+        setTimeout(()=>{
+          badge.remove();
+          flash[playerId].node = null;     // MOVE THIS LINE HERE - clear reference after removal
+        }, 500);
       }, 2000);
     }
     
